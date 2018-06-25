@@ -1,8 +1,9 @@
-<script type="text/javascript">
-
+<script type="text/javascript">   
+    
 main(true) 
-
+  
 function main(isTesting = false) {
+  
   // -----------------------------------------
   
   // Game Memory
@@ -12,7 +13,7 @@ function main(isTesting = false) {
     name: 'Hero',
     hp: 20,
     attackBonus: 5,
-    damage: 3,
+    damage: 4,
     armorClass: 16,
 //     backpack: ['sword', 'cheese', 'cheese'], //having a sword and shield in backpack does nothing, maybe just tracking cheese here would be more useful? 
     cheese: 2,  //<<Joel>>
@@ -28,10 +29,10 @@ function main(isTesting = false) {
       minCount: 1,
       maxCount: 3,
       name: 'skeleton',
-      hp: 10,
+      hp: 15,
       attackBonus: 5,
       damage: 2,
-      armorClass: 10,
+      armorClass: 13,
       backpack: ['cheese']
     },
     { 
@@ -39,15 +40,15 @@ function main(isTesting = false) {
       minCount: 1,
       maxCount: 3,
       name: 'zombie',
-      hp: 13,
+      hp: 11,
       attackBonus: 3,
-      damage: 4,
-      armorClass: 12,
+      damage: 3,
+      armorClass: 15,
       backpack: ['cheese']
     },
     { 
       id: 2,
-      minCount: 0,
+      minCount: 3,
       maxCount: 1,
       name: 'dragon',
       hp: 20,
@@ -59,8 +60,9 @@ function main(isTesting = false) {
   ]
   
   const optionsText = " Explore | Examine | Exit"
-  const cheeseHPBoost = 5;
+  const cheeseHPBoost = 10;
   const defendActionBoost = 5;
+  const promptAction = '\n What are you going to do?\n Attack | Defend | Heal';
   
   const optionsLook = {
     1: 'You are in a dark, mysterious crypt hunting for a famed dragon\'s hoard.',
@@ -74,12 +76,12 @@ function main(isTesting = false) {
   // -----------------------------------------
   // Begin Execution
   // Start Application Loop
-  startApp()
+  startApp(gameState)
   
   // -----------------------------------------
   // Game Functions
   
-  function startApp() {
+  function startApp(gameState) {
 
     // Menu screen (top-level loop)
     while(gameState.appIsActive) {
@@ -94,7 +96,7 @@ function main(isTesting = false) {
         
         switch (option) {
           case 'play':
-            startGame()
+            startGame(gameState)
             break;
 
           case 'quit':
@@ -108,26 +110,26 @@ function main(isTesting = false) {
   }
 
   // --------------
-  function startGame() {
+  function startGame(state) {
     
     // TODO: Generate a list of monsters (update gameState.monsterList)
-    gameState.monsterList = monsters.reduce((list, monster) => (
+    state.monsterList = monsters.reduce((list, monster) => (
       list = [...list, ...Array(randomizer(monster.maxCount, monster.minCount)).fill(monster)]
     ), [])
-    console.log(gameState.monsterList)
+    console.log(state.monsterList)
     
     // Initialize the initial state
     // Example: 
     //    default: gameState
     //    gameStates: [gameState1, gameState2, gameState3]
-
-    while(gameState.gameIsActive === true) {
+//     console.log(state);
+    while(state.gameIsActive === true) {
     
       
       // Current Stats Board - Appended to Prompt
-      let bpItems = gameState.backpack.map( x => ' ' + x.charAt(0).toUpperCase() + x.slice(1) );
+//       let bpItems = gameState.backpack.map( x => ' ' + x.charAt(0).toUpperCase() + x.slice(1) );
       let currStats = 'Current Stats\n--------------\nHealth: ' + gameState.hp + '\nAttack Bonus: ' + gameState.attackBonus + '\nArmor: ' + gameState.armorClass + 
-          '\nDamage: ' + gameState.damage + '\nBackpack: ' + bpItems + '\n\n';
+          '\nDamage: ' + gameState.damage + '\nBackpack: ' + gameState.cheese + ' Cheese' + '\n\n';
       
       // Phase 1
       let userSelection = input(currStats + 'What would you like to do?' + optionsText)
@@ -135,7 +137,7 @@ function main(isTesting = false) {
       // Exits the game if the user selects "Cancel"
       // Prevents an infinite loop
       if(userSelection === null) {
-        gameState = exitGame(gameState)
+        state = exitGame(gameState)
       }
       
       userSelection = userSelection.toLowerCase().trim()
@@ -145,13 +147,13 @@ function main(isTesting = false) {
       //     Creates a new "game board" based
       //     on the end result of the action
       // Returns an object
-      gameState = executeAction(gameState, userSelection)
+      state = executeAction(state, userSelection)
     }
   }
   
   // --------------
-  function executeAction(state, action) {
-    
+  function executeAction(state, action, currStats) {
+    console.log(state)
     // Fight | Look | Exit
     switch (action) {
       case 'explore':
@@ -169,95 +171,169 @@ function main(isTesting = false) {
   // --------------
   function fightAction(state){
    
-    let opponent = opponentSelector(state);
-    let action = input('LOOK OUT! IT\S A ' + opponent.name.toUpperCase() + "\n Do you want to: attack | defend | heal?");
+    let opponent = opponentSelector(state); //im not sure how this works <<joel>>
+    let action = 'begin';// sets the default action to begin to activate the first round message
     
-//     let weapon = input('Choose a weapon to defeat the ' + opponent + '. A sword, shield or cheese.');
-    
-    weapon = weapon.toLowerCase().trim();
-
-    // Sword | Shield | Cheese
-    switch (weapon) {
-      case 'sword':
-        return calculateFight(state, opponent, randomizer(20))
-        
-      case 'shield':  // 
-        return calculateFight(state, opponent, randomizer(20))
-        
-      case 'cheese':
-        return calculateFight(state, opponent, randomizer(20))
-        
-      default: 
-        return state
-    } 
-    
-    if(weapon === null) {
-      state = exitGame(state)
-    }
-         
-  }
-  
-  
-  function calculateFight(state, opponent, num) {
-    /* 
-    
-    const copyPC = state;
-    
-    const fight = (state, opponent, num) =>
+    function calculateFight (state, opponent, num, action) { //recursive function
       
       //base case for PC death
-      if (state.hp === 0) { 
+      if (state.hp <= 0) { 
       
-        let tryAgain = input('YOU ARE DEAD. Try again or Quit?')
+        let tryAgain = input('YOU ARE DEAD. Continue or Quit?')
         tryAgain = tryAgain.toLowerCase().trim();
-        
+
         switch (tryAgain) {
-          case 'Try again':
+          case 'continue':
           return startApp()
-          
-          case 'Quit':
+
+          case 'quit':
           return exitGame(state);
-        
+
           default:
           return startApp();
         }
-      } 
+      }
       
       //base case for NPC death
-      if (opponent.hp === 0) {
-        let continue = input('The ' + opponent.name + ' has been defeated! Dare to contine? (y/n)')
-        continue = continue.toLowerCase().trim()
+      if (opponent.hp <= 0) {
+
+        let continueGame = input('The ' + opponent.name + ' has been defeated! And you found a piece of cheese! Dare to continue? (y/n)')
+        continueGame = continueGame.toLowerCase().trim()
         
-        switch (continue) {
+        if (state.cheese) {
+          state.cheese = state.cheese + 1;
+        } 
+        else {
+          state.cheese = 1;
+        }
+        
+        switch (continueGame) {
           case 'y':
           return state;
           
           case 'n':
           return exitGame();
-          
+      
           default:
           return state
         }
-      
       }
       
-      
-      
-    
-      return fight (copyPC, opponent, num);
-    }
-    
-    
-    
-    */
-    
-    // create algorithm to generate results
-    // update state results
-    // print results 
-    // return to menu
-    return state //(...state, hp: newHp) 
-  }
 
+      //if this is the first round of combat
+      if (action == 'begin' ) {
+        
+//         action = input('LOOK OUT! IT\S A ' + opponent.name.toUpperCase() + promptAction);
+        confirm('LOOK OUT! IT\S A ' + opponent.name.toUpperCase() + '!');
+      }
+      
+      //fix the action input
+      //if not null, lowercase
+      //if null, xit loop
+      if (action === null) {
+        state = exitGame(state);
+      } else {
+        action = action.toLowerCase().trim();
+      }
+      //PC is healing
+      if (action == 'heal') {
+        
+        //if PC has cheese, they can use it to heal
+        if (state.cheese) {
+
+          state.hp = state.hp + cheeseHPBoost;
+          
+          //they consume one cheese from their inventory
+          state.cheese = state.cheese - 1;
+          
+          //if they use all their cheese, it goes away. PC can get more cheese from killing monsters 
+          if (state.cheese === 0) {
+            delete state.cheese;
+          }
+        }
+        //if PC has no cheese, they get a warning
+        else {
+          let cheeseWarning = input('You are out of cheese! Keep an eye on your stats! \n' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese + '\nReady to continue? (y/n)');
+          if (cheeseWarning == 'n') return exitGame();
+        }
+      }
+
+      //the NPC goes first each subsequent round (I think this sometimes gets skipped)
+      //if PC is defending
+      if (action == 'defend') {
+        //PC is defending but gets hit
+        if (opponent.attackBonus + num >= (state.armorClass + defendActionBoost)) {
+          //reduce PC hp by NPC damage
+          state.hp = state.hp - opponent.damage;
+          action = input('You try to block, but the ' + opponent.name + '\'s attack strikes you for ' + opponent.damage + '!\n' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese + promptAction);
+        }
+        //PC is defending and blocks
+        else if (opponent.attackBonus + num < (state.armorClass + defendActionBoost)) {
+          action = input('The ' + opponent.name + ' attacks, but you block the attack!\n ' +'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese + promptAction);
+        }
+      }
+      
+        //PC gets hit by attack
+      if (opponent.attackBonus + num >= state.armorClass) {
+        //reduce PC hp by NPC damage
+        state.hp = state.hp - opponent.damage;   
+       action = input('The ' + opponent.name + ' hit you for ' + opponent.damage + ' damage!\n ' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese + promptAction);
+//           confirm('The ' + opponent.name + ' hit you for ' + opponent.damage + ' damage!\n ' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese);
+      }
+
+      //PC dodges attack
+      else if (opponent.attack + num < state.armorClass) {
+       action = input('The ' + opponent.name + ' attacks, but you dodge!/n ' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese + promptAction);  
+//           confirm('The ' + opponent.name + ' attacks, but you dodge!/n ' + 'Current HP = ' + state.hp + '\n Current Cheese: ' + state.cheese);
+      }
+     
+      
+      
+      // Attack
+      if (action == 'attack') {
+        //PC hits 
+        if (state.attackBonus + num >= opponent.armorClass) { 
+          //reduce NPC hp by PC damage
+          opponent.hp = opponent.hp - state.attackBonus;
+//           action = input('You attack the ' + opponent.name + ' for ' + state.damage + ' damage!' + promptAction); 
+          confirm('You attack the ' + opponent.name + ' for ' + state.damage + ' damage!');
+ 
+//           return calculateFight(state, opponent, randomizer(20), action)
+        }
+        
+        //PCmisses
+        else if (state.attackBonus + num >= opponent.armorClass) {
+//           action = input('Your attack is blocked by the ' + opponent.name + '!' + promptAction);
+          confirm('Your attack is blocked by the ' + opponent.name + '!');
+//           return calculateFight(state, opponent, randomizer(20), action)
+        }    
+      }
+      
+//       // Defend
+//       else if (action === 'defend') {
+//         //both Defend and Heal have no logic in the body because the effects take place at the beginning of the next invocation
+//         return calculateFight(state, opponent, randomizer(20), action)
+//       }
+//       // Heal
+//       else if (action === 'heal') {
+//         return calculateFight(state, opponent, randomizer(20), action)
+//       }
+      
+//       //if inut is null prompt again
+//       if (action === null) {
+//         state = exitGame(state)
+//       }
+      
+      return calculateFight(state, opponent, randomizer(20), action);
+  }
+    
+  calculateFight(state, opponent, randomizer(20), action);
+  return state
+}
+      
+      
+      
+      
   
   // --------------
   function opponentSelector(state){
