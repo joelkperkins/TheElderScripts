@@ -13,8 +13,9 @@ function main(isTesting = false) {
     hp: 20,
     attackBonus: 5,
     damage: 3,
-    armorClass: 12,
-    backpack: ['sword', 'shield', 'cheese'],
+    armorClass: 16,
+//     backpack: ['sword', 'cheese', 'cheese'], //having a sword and shield in backpack does nothing, maybe just tracking cheese here would be more useful? 
+    cheese: 2,  //<<Joel>>
     monsterList: []
   }
 
@@ -57,14 +58,16 @@ function main(isTesting = false) {
     }
   ]
   
-  const optionsText = " Fight | Look | Exit"
+  const optionsText = " Explore | Examine | Exit"
+  const cheeseHPBoost = 5;
+  const defendActionBoost = 5;
   
   const optionsLook = {
-    1: 'Look filler text 1',
-    2: 'Look filler text 2',
-    3: 'Look filler text 3',
-    4: 'Look filler text 4',
-    5: 'Look filler text 5',
+    1: 'You are in a dark, mysterious crypt hunting for a famed dragon\'s hoard.',
+    2: 'This crypt is haunted by skeletons and zombies...they can come out of nowhere...',
+    3: 'This crypt smells like centuries of damp dust and decay. The sounds of creaking bones and the moans of the undead stir listlessly around you.',
+    4: 'It is so dark, your meager lamplight illuminates only a couple of feet ahead of you. What is lurking in the shadows beyond?',
+    5: 'Is it too late to turn around?'
   }
   
   
@@ -151,9 +154,9 @@ function main(isTesting = false) {
     
     // Fight | Look | Exit
     switch (action) {
-      case 'fight':
+      case 'explore':
         return fightAction(state)
-      case 'look':  // 
+      case 'examine':  // 
         return lookAction(state);
       case 'exit':
         return exitGame(state)
@@ -166,20 +169,23 @@ function main(isTesting = false) {
   // --------------
   function fightAction(state){
    
-    output('Fight begins!')
     let opponent = opponentSelector(state);
-    let weapon = input('Choose a weapon to defeat the ' + opponent + '. A sword, shield or cheese.');
+    let action = input('LOOK OUT! IT\S A ' + opponent.name.toUpperCase() + "\n Do you want to: attack | defend | heal?");
+    
+//     let weapon = input('Choose a weapon to defeat the ' + opponent + '. A sword, shield or cheese.');
+    
+    weapon = weapon.toLowerCase().trim();
 
     // Sword | Shield | Cheese
     switch (weapon) {
       case 'sword':
-        return calculateFight(state, opponent, randomizer(3))
+        return calculateFight(state, opponent, randomizer(20))
         
       case 'shield':  // 
-        return calculateFight(state, opponent, randomizer(3))
+        return calculateFight(state, opponent, randomizer(20))
         
       case 'cheese':
-        return calculateFight(state, opponent, randomizer(3))
+        return calculateFight(state, opponent, randomizer(20))
         
       default: 
         return state
@@ -195,6 +201,51 @@ function main(isTesting = false) {
   function calculateFight(state, opponent, num) {
     /* 
     
+    const copyPC = state;
+    
+    const fight = (state, opponent, num) =>
+      
+      //base case for PC death
+      if (state.hp === 0) { 
+      
+        let tryAgain = input('YOU ARE DEAD. Try again or Quit?')
+        tryAgain = tryAgain.toLowerCase().trim();
+        
+        switch (tryAgain) {
+          case 'Try again':
+          return startApp()
+          
+          case 'Quit':
+          return exitGame(state);
+        
+          default:
+          return startApp();
+        }
+      } 
+      
+      //base case for NPC death
+      if (opponent.hp === 0) {
+        let continue = input('The ' + opponent.name + ' has been defeated! Dare to contine? (y/n)')
+        continue = continue.toLowerCase().trim()
+        
+        switch (continue) {
+          case 'y':
+          return state;
+          
+          case 'n':
+          return exitGame();
+          
+          default:
+          return state
+        }
+      
+      }
+      
+      
+      
+    
+      return fight (copyPC, opponent, num);
+    }
     
     
     
