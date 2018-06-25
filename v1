@@ -14,7 +14,7 @@ function main(isTesting = false) {
     attackBonus: 5,
     damage: 3,
     armorClass: 12,
-    backpack: ['sword', 'shield', 'cheese'],
+    backpack: ['sword', 'cheese', 'cheese'],//since the other items dont matter we should only count cheese?
     monsterList: []
   }
 
@@ -57,14 +57,14 @@ function main(isTesting = false) {
     }
   ]
   
-  const optionsText = " Fight | Look | Exit"
+  const optionsText = " Fight | Explore | Exit"
   
-  const optionsLook = {
-    1: 'Look filler text 1',
-    2: 'Look filler text 2',
-    3: 'Look filler text 3',
-    4: 'Look filler text 4',
-    5: 'Look filler text 5',
+  const optionsExplore = {
+    1: 'Explore filler text 1',
+    2: 'Explore filler text 2',
+    3: 'Explore filler text 3',
+    4: 'Explore filler text 4',
+    5: 'Explore filler text 5',
   }
   
   
@@ -108,10 +108,12 @@ function main(isTesting = false) {
   function startGame() {
     
     // TODO: Generate a list of monsters (update gameState.monsterList)
-    gameState.monsterList = monsters.reduce((list, monster) => (
-      list = [...list, ...Array(randomizer(monster.maxCount, monster.minCount)).fill(monster)]
-    ), [])
-    console.log(gameState.monsterList)
+    gameState.monsterList = []
+    /*
+      gameState.monsterList = monsters.reduce((list, element) => (
+        list = [...list, ...Array(randomizer(3)).fill(element)]
+      ), [])
+    */
     
     // Initialize the initial state
     // Example: 
@@ -127,7 +129,7 @@ function main(isTesting = false) {
           '\nDamage: ' + gameState.damage + '\nBackpack: ' + bpItems + '\n\n';
       
       // Phase 1
-      let userSelection = input(currStats + 'What would you like to do?' + optionsText)
+      let userSelection = input(currStats + 'What would you like to do?' + optionsText)//where is this?
       
       // Exits the game if the user selects "Cancel"
       // Prevents an infinite loop
@@ -149,12 +151,12 @@ function main(isTesting = false) {
   // --------------
   function executeAction(state, action) {
     
-    // Fight | Look | Exit
+    // Fight | Look | Status | Undo | Exit
     switch (action) {
       case 'fight':
         return fightAction(state)
-      case 'look':  // 
-        return lookAction(state);
+      case 'look':  // describe chamber and opponent
+        return exploreAction(state);
       case 'exit':
         return exitGame(state)
         
@@ -164,52 +166,112 @@ function main(isTesting = false) {
   }
   
   // --------------
-  function fightAction(state){
-   
-    output('Fight begins!')
-    let opponent = opponentSelector(state);
-    let weapon = input('Choose a weapon to defeat the ' + opponent + '. A sword, shield or cheese.');
+  function fightAction(state) {
+   //hufe!!! we need rl already know what the opponent is....
+    let opponent = opponentSelector(state);//creates a duplicate obj for the new monster
+
+    output('Fighting a ' + oppenent.name + '!');//remknder as we cue for action
+    let action = input('Will you: attack? defend? or heal?');
 
     // Sword | Shield | Cheese
-    switch (weapon) {
-      case 'sword':
-        return calculateFight(state, opponent, randomizer(3))
-        
-      case 'shield':  // 
-        return calculateFight(state, opponent, randomizer(3))
-        
-      case 'cheese':
-        return calculateFight(state, opponent, randomizer(3))
-        
+    switch (attack) {
+      case 'attack':
+        return calculateFight(state, opponent, randomizer(20), action),
+        break;
+      case 'defend':  // 
+        return calculateFight(state, opponent, randomizer(20), action),
+        break;
+      case 'heal':
+        return calculateFight(state, opponent, randomizer(20), action),
+        break;
       default: 
         return state
     } 
     
-    if(weapon === null) {
+    if(action === null) {
       state = exitGame(state)
     }
          
   }
+
+  //fight sction is recursive because we have three distinct base cases...
+  //one when NPC HP =0
+  //two whwn PC HP =0
+  //three of the player flees, and maybe we dont do this fpr simplicity
+  //we ca'l the function each time AFTERrunning thrugh the logic of the calculare fight function
+  //whenwe call it we willmpass it the updates obj values //until base case, rhen we pass the final all the way and that object
+  //either pc or npd gets returned to the execute which will go back to main loop 
+  //if the pc object has 0hp game over else we will peompt for the next action and intrpduce the next room
   
   
-  function calculateFight(state, opponent, num) {
-    /* 
+  function calculateFight(state, opponent, num, action) {//dup monster obj gets passed here so we can track hp?
+      //let cheese = 5; // how much hp gained when PC eats cheese
+      //let cheeseCount = 0; //# of cheeses in backpack rn
+      //let copyOfPC = state; //this creates a copy of the PC obj so we can modify data without touching the global obj until we return 
+/*  if (action === attack) {
+
+        //if the PC attack hits
+        if (copyOfPC.attackBonus + num >= opponent.armorClass) { 
+            opponent.hp: opponent.hp - copyOfPC.attackBonus;
+            output('You attack the ' + opponent.name + ' for ' + copyOfPC.damage + ' damage!');
+        }
+        //if the PC attack misses
+        else if (copyOfPC.attackBonus + num >= opponent.armorClass) {
+            output('Your attack is blocked by the ' + opponent.name);
+        }
+        //if the NPC attack hits the PC
+        if (oppenent.attackBonus + num >= copyOfPC.armorClass) {
+            copyOfPC.hp= copyOfPC.hp - oppenent.damage;   
+            output('The ' + oppenent.name + ' hit you for ' + oppenent.damage + ' damage!');
+            output('Current HP: ' + copyOfPC.hp);
+        }
+        //if the NPC attack misses the PC
+        else if (opponent.attack + num < copyOfPC.armorClass) {
+            output('The ' + opponent.name ' attacks, but you dodge!')
+            output(Current HP: copyOfPC.hp)
+        }
+    }
+    else if (action === defend) {
+        //defending bonus increases armor class by 5
+        //if the NPC attack misses the PC
+        if (opponent.attackBonus + num < (copyOfPC.armorClass + 5) {
+            output('The ' + opponent.name + ' attacks, but you block the attack!')
+        }
+        //if the NPC attck hits the PC
+        else if (opponent.attackBonus + num >= (copyOfPC.armorClass + 5)) {
+            output('You try to block, but the ' + opponent.name + '\'s attack strikes you for ' + opponent.damage + '!')
+            copyOfPC.hp: copyOfPC.hp - opponent.damage;
+            output('Current HP: ' + copyOfPC.hp;
+        }
+    }
+    else if (action === heal) {
     
-    
-    
-    
+        if (copyOfPC.backpack.indexOf('cheese') === -1) {
+            output('You are out of cheese! Choose a different action!');
+        }
+        else {
+            for (let i = 0; i < copyOfPC.backpack.length; i++) {
+                if (copyOfPC.backpack[i] === cheese) {
+                    cheeseCount++;
+                }
+            }
+            copyOfPC.hp: copyOfPC.hp + cheese;
+            output('You eat some cheese and gain ' + cheese + ' HP! Current HP: ' + copyOfPC.hp + '. You have ' + cheeseCount ' left!');
+        }
+    }
+
     */
     
-    // create algorithm to generate results
+    // create algorithm to generate results 
     // update state results
     // print results 
     // return to menu
-    return state //(...state, hp: newHp) 
+    return copyOfPC //(...state,); 
   }
 
   
   // --------------
-  function opponentSelector(state){
+  function opponentSelector(state){//create a duplicate object which can track hp w/o modding original obj
     const [monster, ...allOfTheOtherMonsters] = state.monsterList
     state.monsterList = [...allOfTheOtherMonsters]
     
@@ -235,8 +297,9 @@ function main(isTesting = false) {
     return state
   }
   
-  function lookAction(state) {
-    output(lookGenerator(state));
+  function exploreAction(state) {
+    output(exploreGenerator(state));
+    console.log('explore action:' + state)
     return state
   } 
   
@@ -249,7 +312,11 @@ function main(isTesting = false) {
   function output(str) {
     document.write(JSON.stringify(str, null, 2) + '<br>')
   }
-
+  
+//   // --------------
+//   function outputMulti(str) {
+//     document.write(JSON.stringify(str, null, 2) + '<br>')
+//   }
 
   // --------------
   function input(str) {
@@ -272,24 +339,25 @@ function main(isTesting = false) {
   }
   
   // --------------
-  function lookGenerator(state){
-    let story = randomizer(5, 1);
-    return confirm(optionsLook[story.toString()])
+  function exploreGenerator(state){
+    let story = randomizer(5);
+    return confirm(optionsExplore[story.toString()])
   }
   
   // --------------
   
   
-  function shuffle(originalArray) {
-    let newArray = [...originalArray]
-      for (let index = newArray.length - 1; i > 0; i--) {
-          const randomNumber = Math.floor(Math.random() * (i + 1));
-          [newArray[index], newArray[randomNumber]] = [newArray[randomNumber], newArray[index]];
-      }
-
-      return newArray;
-    }  
-
+  function shuffle(array) {
+    let newArray = [...array]
+    for (let index = array.length - 1; i > 0; i--) {
+      
+        const randomNumber = Math.floor(Math.random() * (i + 1));
+      
+        [newArray[index], newArray[randomNumber]] = [newArray[randomNumber], newArray[index]];
+    }
+    return a;
+  }  
+ 
 }
   
 
