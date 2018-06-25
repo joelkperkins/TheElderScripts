@@ -1,0 +1,392 @@
+<script type="text/javascript">
+
+main(true) 
+
+function main(isTesting = false) {
+  // -----------------------------------------
+  
+  // Game Memory
+  let gameState = {
+    appIsActive: true,
+    gameIsActive: true,
+    name: 'Hero',
+    hp: 20,
+    attackBonus: 5,
+    damage: 3,
+    armorClass: 12,
+    backpack: ['sword', 'shield', 'cheese'],
+    monsterList: []
+  }
+
+  
+  // -----------------------------------------
+  // Game Details
+  const monsters = [
+    { 
+      id: 0,
+      minCount: 1,
+      maxCount: 3,
+      name: 'skeleton',
+      hp: 10,
+      attackBonus: 5,
+      damage: 2,
+      armorClass: 10,
+      backpack: ['cheese']
+    },
+    { 
+      id: 1,
+      minCount: 1,
+      maxCount: 3,
+      name: 'zombie',
+      hp: 13,
+      attackBonus: 3,
+      damage: 4,
+      armorClass: 12,
+      backpack: ['cheese']
+    },
+    { 
+      id: 2,
+      minCount: 0,
+      maxCount: 1,
+      name: 'dragon',
+      hp: 20,
+      attackBonus: 10,
+      damage: 10,
+      armorClass: 18,
+      backpack: ['gold']
+    }
+  ]
+  
+  const optionsText = " Fight | Look | Exit"
+  
+  const optionsLook = {
+    1: 'Look filler text 1',
+    2: 'Look filler text 2',
+    3: 'Look filler text 3',
+    4: 'Look filler text 4',
+    5: 'Look filler text 5',
+  }
+  
+  
+  // -----------------------------------------
+  // Begin Execution
+  // Start Application Loop
+  startApp()
+  
+  // -----------------------------------------
+  // Game Functions
+  
+  function startApp() {
+
+    // Menu screen (top-level loop)
+    while(gameState.appIsActive) {
+      let option = prompt('Welcome to The Elder Scripts III!  Play | Quit');
+      
+      
+      if(option === null) {
+        gameState = exitApp(gameState)
+      } else {
+        
+        option = option.toLowerCase()
+        
+        switch (option) {
+          case 'play':
+            startGame()
+            break;
+
+          case 'quit':
+            gameState = exitApp(gameState)
+            break;
+        }
+      
+      }
+    }
+    
+  }
+
+  // --------------
+  function startGame() {
+    
+    // TODO: Generate a list of monsters (update gameState.monsterList)
+    gameState.monsterList = monsters.reduce((list, monster) => (
+      list = [...list, ...Array(randomizer(monster.maxCount, monster.minCount)).fill(monster)]
+    ), [])
+    console.log(gameState.monsterList)
+    
+    // Initialize the initial state
+    // Example: 
+    //    default: gameState
+    //    gameStates: [gameState1, gameState2, gameState3]
+
+    while(gameState.gameIsActive === true) {
+    
+      
+      // Current Stats Board - Appended to Prompt
+      let bpItems = gameState.backpack.map( x => ' ' + x.charAt(0).toUpperCase() + x.slice(1) );
+      let currStats = 'Current Stats\n--------------\nHealth: ' + gameState.hp + '\nAttack Bonus: ' + gameState.attackBonus + '\nArmor: ' + gameState.armorClass + 
+          '\nDamage: ' + gameState.damage + '\nBackpack: ' + bpItems + '\n\n';
+      
+      // Phase 1
+      let userSelection = input(currStats + 'What would you like to do?' + optionsText)
+      
+      // Exits the game if the user selects "Cancel"
+      // Prevents an infinite loop
+      if(userSelection === null) {
+        gameState = exitGame(gameState)
+      }
+      
+      userSelection = userSelection.toLowerCase().trim()
+      
+      // Phase 2
+      // Run the selected action;
+      //     Creates a new "game board" based
+      //     on the end result of the action
+      // Returns an object
+      gameState = executeAction(gameState, userSelection)
+    }
+  }
+  
+  // --------------
+  function executeAction(state, action) {
+    
+    // Fight | Look | Exit
+    switch (action) {
+      case 'fight':
+        return fightAction(state)
+      case 'look':  // 
+        return lookAction(state);
+      case 'exit':
+        return exitGame(state)
+        
+      default: 
+        return state
+    }
+  }
+  
+  // --------------
+  function fightAction(state){
+   
+    output('Fight begins!')
+    let opponent = opponentSelector(state);
+    let weapon = input('Choose a weapon to defeat the ' + opponent + '. A sword, shield or cheese.');
+
+    // Sword | Shield | Cheese
+    switch (weapon) {
+      case 'sword':
+        return calculateFight(state, opponent, randomizer(3))
+        
+      case 'shield':  // 
+        return calculateFight(state, opponent, randomizer(3))
+        
+      case 'cheese':
+        return calculateFight(state, opponent, randomizer(3))
+        
+      default: 
+        return state
+    } 
+    
+    if(weapon === null) {
+      state = exitGame(state)
+    }
+         
+  }
+  
+  
+  function calculateFight(state, opponent, num) {
+    /* 
+    
+    
+    
+    
+    */
+    
+    // create algorithm to generate results
+    // update state results
+    // print results 
+    // return to menu
+    return state //(...state, hp: newHp) 
+  }
+
+  
+  // --------------
+  function opponentSelector(state){
+    const [monster, ...allOfTheOtherMonsters] = state.monsterList
+    state.monsterList = [...allOfTheOtherMonsters]
+    
+    return monster
+  }
+  
+  // --------------
+  function exitGame(state) {
+    output('You left the game.')
+    return {...state, gameIsActive: false}
+  }
+  
+  // --------------
+  function exitApp(state) {
+    output('Goodbye. Hasta Luego.')
+    exit();
+  }
+  
+  // --------------
+  function viewStatus(state) {
+    output('Your Status: <br>');
+    output(JSON.stringify(state.player, null, 2));
+    return state
+  }
+  
+  function lookAction(state) {
+    output(lookGenerator(state));
+    return state
+  } 
+  
+  function undoAction(states) {
+    states = removeLastElement(states)
+    return states[states.length - 1]
+  }
+
+  // --------------
+  function output(str) {
+    document.write(JSON.stringify(str, null, 2) + '<br>')
+  }
+
+
+  // --------------
+  function input(str) {
+    return prompt(str)
+  }
+  
+  // --------------
+  function devLog(...rest) {
+    if(isTesting) {
+      console.log(...rest)
+      document.write(JSON.stringify(rest, null, 2) + '<br>')
+    }
+    // else, show nothing if app is live
+  }
+  
+  // --------------
+  // Option for randomizing rooms and opponents
+  function randomizer(max, min = 1){
+    return Math.floor((Math.random() * max) + min);
+  }
+  
+  // --------------
+  function lookGenerator(state){
+    let story = randomizer(5, 1);
+    return confirm(optionsLook[story.toString()])
+  }
+  
+  // --------------
+  
+  
+  function shuffle(originalArray) {
+    let newArray = [...originalArray]
+      for (let index = newArray.length - 1; i > 0; i--) {
+          const randomNumber = Math.floor(Math.random() * (i + 1));
+          [newArray[index], newArray[randomNumber]] = [newArray[randomNumber], newArray[index]];
+      }
+
+      return newArray;
+    }  
+
+}
+  
+
+  
+  
+
+
+/* Game Notes
+
+Game Flow:
+
+1. User runs game. Press green 'Run' button at the bottom.
+2. Prompt "Welcome to The Elder Scripts III!  Play | Load Last Save // Denny | Quit"
+3. Play:  Output -> Initial story text, sets the scene.
+4. Prompt Action Loop: Fight | Explore | Status | Exit | Undo
+
+  a. Fight
+      -> Prompt: Story Text with Monster. Attack | Defend | Item | Run
+            a. Attack
+            b. Defend
+            c. Item
+            d. Run
+      -> Creates new state based on current state value *MOST COMPLICATED 
+      -> Print end result, goes back to Action Loop
+      
+  b. Explore
+      -> Output - Filler Text, randomizer 
+      
+  c. Status
+      -> Output - current player's state: health, attack rating
+      
+  d. Exit
+      -> exitGame function, ends current loop, goes back to StartGame loop
+      
+  e. Undo
+      -> DENNY
+      
+5. Returns to startGame options, Returns to number 2.
+
+
+
+
+
+> The Elder Scripts III
+
+> One class - fighter
+  >> attack
+  >> block
+  >> run
+  >> use item
+  backpack: [cheese, sword, shield, cheese]
+
+const fighter = {
+  attack: 5, 
+  defense: 12,
+  speed: 30,
+  backpack: [
+    cheese,
+    sword,
+    shield
+  ]
+  
+}
+
+>random array of opponents (3)
+>> (0) skeleton, (1) zombie, (2) dragon
+
+>>>skeleton
+  >hp
+  >armor class
+  >attack
+
+>>>zombie
+  >hp
+  >armor class
+  >bite 
+  >attack
+
+>>>dragon
+  >hp
+  >armor class
+  >fire attack
+
+>> certain # of chambers 
+>>>
+
+>>Features
+
+1) game loop start to finish (do while PC hp > 0??) 
+2) get PC
+3) random chambers --> encounters
+4) NPC
+5) control flow(while NPC hp > 0) for attacking and defending 
+  > if PC hp = 0 end
+6) PC goes to new loop in #3
+7) health points tracking
+8) flavor text (narative)
+*/
+// --------------
+</script>
